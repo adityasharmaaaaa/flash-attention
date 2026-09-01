@@ -107,10 +107,12 @@ int main(int argc, char** argv) {
     CUDA_CHECK(cudaMemcpy(Ad, A.data(), (size_t)M * K * sizeof(float), cudaMemcpyHostToDevice));
     CUDA_CHECK(cudaMemcpy(Bd, B.data(), (size_t)K * N * sizeof(float), cudaMemcpyHostToDevice));
 
+    dim3 blockNaive(16, 16); // fixed baseline config, independent of TILE
+    dim3 gridNaive((N + 15) / 16, (M + 15) / 16);
     dim3 block(TILE, TILE);
     dim3 grid((N + TILE - 1) / TILE, (M + TILE - 1) / TILE);
 
-    float msNaive = benchmark(launchNaive, grid, block, Ad, Bd, Cd_naive, M, K, N, 10);
+    float msNaive = benchmark(launchNaive, gridNaive, blockNaive, Ad, Bd, Cd_naive, M, K, N, 10);
     float msTiled = benchmark(launchTiled, grid, block, Ad, Bd, Cd_tiled, M, K, N, 10);
 
     double flops = 2.0 * M * N * K;
